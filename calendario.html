@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Contenidos</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js'></script>
+
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap');
+    body {
+        font-family: 'Lato', sans-serif;
+        margin: 20px;
+    }
+
+    #calendar {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    /* Estilos para el título y botones del calendario */
+    .fc-toolbar-title {
+        text-transform: uppercase;
+        font-weight: bold;
+        color: #ff0066; /* Color del título */
+    }
+
+    .fc-button {
+        background-color: #ff0066; /* Color de los botones */
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .fc-button:hover {
+        background-color: #cc0055; /* Efecto hover para los botones */
+    }
+
+    .fc-button:focus {
+        outline: none; /* Sin borde al hacer clic en los botones */
+    }
+
+   .fc-event {
+    background-color: #ff0066;
+    border: none;
+    color: white;
+    padding: 5px 2px; /* Reducir el padding para ajustar el contenido */
+    border-radius: 8px;
+    font-size: 0.8em;
+    word-wrap: break-word;
+    white-space: normal;
+    max-height: 100%;
+    line-height: 1.1; /* Reducir aún más la altura de línea */
+    margin: 0; /* Eliminar márgenes adicionales */
+}
+
+.fc-event .fc-event-title {
+    word-wrap: break-word;
+    margin: 0; /* Eliminar márgenes dentro del título del evento */
+    padding: 0; /* Asegurarse que no hay padding extra */
+}
+
+.fc-event-content {
+    padding: 0; /* Remover padding dentro del contenido del evento */
+    margin: 0; /* Remover cualquier margen sobrante */
+}
+
+
+
+</style>
+
+</head>
+<body>
+
+    <div id="calendar"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+
+            // Llamar a Google Apps Script para obtener los datos
+            google.script.run.withSuccessHandler(function(calendarData) {
+                var events = [];
+
+                // Recorrer los datos del calendario y formatear para FullCalendar
+                for (var monthKey in calendarData) {
+                    if (calendarData.hasOwnProperty(monthKey)) {
+                        var daysData = calendarData[monthKey];
+
+                        for (var day in daysData) {
+                            if (daysData.hasOwnProperty(day)) {
+                                daysData[day].forEach(function(eventContent) {
+                                    if (eventContent.trim() !== '') {
+                                        // Crear evento para FullCalendar
+                                        events.push({
+                                            title: '', // Título vacío, usaremos innerHTML
+                                            start: monthKey + '-' + day.padStart(2, '0'), // Fecha del evento
+                                            extendedProps: {
+                                                description: eventContent // Guardar la descripción del evento agrupada
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Inicializar FullCalendar con los eventos
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'es', // Idioma español
+                    headerToolbar: {
+                        left: 'prev,next', // Solo los botones de navegación entre meses
+                        center: 'title',
+                        right: '' // Eliminamos "today", "month", "week", "day"
+                    },
+                    events: events, // Insertar eventos dinámicos
+                    eventContent: function(arg) {
+                        // Mostrar la descripción del evento como innerHTML
+                        let eventDiv = document.createElement('div');
+                        eventDiv.innerHTML = arg.event.extendedProps.description;
+                        return { domNodes: [eventDiv] };
+                    }
+                });
+
+                calendar.render();
+            }).getCalendarData();
+        });
+    </script>
+</body>
+</html>
